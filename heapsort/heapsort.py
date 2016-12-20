@@ -8,17 +8,22 @@ import time
 import sys
 
 
+glob_animate = True
+
 def animate(f):
     def wrap_print(*args, **kwargs):
-        sys.stdout.write("\r" + ' '.join([str(el) for el in f(*args, **kwargs)]))
-        sys.stdout.flush()
-        time.sleep(0.5)
+        arr = f(*args, **kwargs)
+        if glob_animate:
+            sys.stdout.write("\r" + ' '.join([str(el) for el in arr]))
+            sys.stdout.flush()
+            time.sleep(0.5)
     return wrap_print
 
 
 class Heap(object):
     def __init__(self):
         self.heap = []
+        self.maximum = -1
 
     def get_parent(self, index):
         return (index - 1)/2
@@ -64,12 +69,12 @@ class Heap(object):
             min_child = self.get_min_child(min_child, cur_len - 1)
 
     def build_heap(self, unsorted):
-        print 'Building the heap:'
         for elem in unsorted:
+            if elem > self.maximum:
+                self.maximum = elem
             self.insert(elem)
 
     def print_heap(self):
-        print '\nThe heap:'
         height = int(math.ceil(math.log(len(self.heap), 2)))
         cur_width = 1
         cur_offset = 0
@@ -79,7 +84,7 @@ class Heap(object):
             cur_x = 0
             cur_row = ''
             for i in range(cur_offset, last):
-                next_x = 3 * (i - cur_offset) * 2**(height - floor)
+                next_x = (len(str(self.maximum)) + 1) * (i - cur_offset) * 2**(height - floor)
                 cur_row += ''.join([' ' for j in range(cur_x, next_x)])
                 cur_row += str(self.heap[i])
                 cur_x = next_x + len(str(self.heap[i]))
@@ -89,26 +94,35 @@ class Heap(object):
             floor += 1
 
     def deconstruct(self):
-        print 'Sorting the heap:'
         cur_len = len(self.heap) - 1
         while cur_len > 0:
             self.extract_min(cur_len)
             cur_len -= 1
 
-    def sort(self, unsorted):
+    def sort(self, unsorted, animate, printh):
+        if animate:
+            print "Build heap:"
         self.build_heap(unsorted)
-        self.print_heap()
+        if printh:
+            print "\nThe heap:"
+            self.print_heap()
+        if animate:
+            print "\nSort heap:"
         self.deconstruct()
 
 
 @click.command()
 @click.option("-f", "--filename", help="input file name")
-def main(filename):
+@click.option("--animate/--no-animate", default=False, help="animate if desired")
+@click.option("--printh/--no-printh", default=False, help="print heap")
+def main(filename, animate, printh):
+    global glob_animate
+    glob_animate = animate
     with open(filename, "r") as f:
-        unsorted = [int(el) for el in f.read().strip().split(',')]
+        unsorted = [int(el.strip()) for el in f.readlines()]
         heap = Heap()
-        heap.sort(unsorted)
-        print '\r'
+        heap.sort(unsorted, animate, printh)
+        print "\n" + ' '.join([str(el) for el in heap.heap])
 
 
 if __name__ == '__main__':
