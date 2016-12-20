@@ -9,6 +9,7 @@ import sys
 
 
 glob_animate = True
+glob_speed = 0.5 # seconds per move
 
 def animate(f):
     def wrap_print(*args, **kwargs):
@@ -16,7 +17,7 @@ def animate(f):
         if glob_animate:
             sys.stdout.write("\r" + ' '.join([str(el) for el in arr]))
             sys.stdout.flush()
-            time.sleep(0.5)
+            time.sleep(glob_speed)
     return wrap_print
 
 
@@ -115,9 +116,12 @@ class Heap(object):
 @click.option("-f", "--filename", help="input file name")
 @click.option("--animate/--no-animate", default=False, help="animate if desired")
 @click.option("--printh/--no-printh", default=False, help="print heap")
-def main(filename, animate, printh):
+@click.option("-spm", "--seconds-per-move", type=float, default=0.5, help="seconds per move")
+def main(filename, animate, printh, seconds_per_move):
     global glob_animate
     glob_animate = animate
+    global glob_speed
+    glob_speed = seconds_per_move
     with open(filename, "r") as f:
         unsorted = [int(el.strip()) for el in f.readlines()]
         heap = Heap()
