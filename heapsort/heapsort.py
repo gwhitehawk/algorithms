@@ -116,7 +116,7 @@ class Heap(object):
 @click.option('-f', '--filename', help='input file name')
 @click.option('--animate/--no-animate', default=False, help='animate if desired')
 @click.option('--printh/--no-printh', default=False, help='print heap')
-@click.option('-spm', '--seconds-per-move', type=float, default=0.5, help='seconds per move')
+@click.option('-spm', '--seconds_per_move', type=float, default=0.5, help='seconds per move')
 def main(filename, animate, printh, seconds_per_move):
   global glob_animate
   glob_animate = animate

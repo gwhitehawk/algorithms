@@ -4,14 +4,34 @@
 # unreachable from source.
 
 import click
+import time
+import matplotlib.pyplot as plt
+import graph_drawer
+
+OUTPUT_FILE = 'output.txt'
+with open(OUTPUT_FILE, 'w') as output:
+  output.write('')
+
+input_file = ''
+glob_animate = True
+glob_speed = 1 # seconds per move
+figure = plt.figure()
 
 
-class Edge(object):
-  def __init__(self, dest, weight):
-    self.dest = dest
-    self.weight = weight
+def animate(f):
+  def wrap_update(*args, **kwargs):
+    final_node = f(*args, **kwargs)
+    if glob_animate:
+      with open(OUTPUT_FILE, 'a') as output:
+        output.write('{},{}\n'.format(final_node.label, final_node.previous))
+      graph_drawer.draw_graph(input_file, OUTPUT_FILE, figure)
+      time.sleep(glob_speed)
+    return final_node
+  return wrap_update
+
 
 class Node(object):
+
   def __init__(self, label):
     self.label = label
     self.distance = -1
@@ -22,6 +42,7 @@ class Node(object):
   def add_neighbor(self, neighbor, weight):
     if neighbor not in self.neighbors:
       self.neighbors[neighbor] = weight
+
 
 class Graph(object):
   def __init__(self, filename):
@@ -42,6 +63,7 @@ class Graph(object):
     else:
       return self.nodes[label]
 
+  @animate
   def update(self, final):
     min_dist = -1
     next_final = None
@@ -61,7 +83,7 @@ class Graph(object):
     if next_final is not None:
       final.append(next_final)
       self.nodes[next_final].final = True
-    return next_final is None
+    return self.nodes.get(next_final)
 
   def shortest_path(self, source, target):
     final = [source]
@@ -70,7 +92,7 @@ class Graph(object):
     source_v.final = True
     end = False
     while not self.nodes[target].final and not end:
-      end = self.update(final)
+      end = self.update(final) is None
     path = [target]
     current = self.nodes[target]
     while current.previous:
@@ -85,7 +107,16 @@ class Graph(object):
 @click.option('-f', '--filename', help='graph file name')
 @click.option('-s', '--source', help='source')
 @click.option('-t', '--target', help='target')
-def main(filename, source, target):
+@click.option('--animate/--no-animate', default=False, help='animate if desired')
+@click.option('-spm', '--seconds_per_move', type=float, default=0.5, help='seconds per move')
+def main(filename, source, target, animate, seconds_per_move):
+  global glob_animate
+  glob_animate = animate
+  global glob_speed
+  glob_speed = seconds_per_move
+  global input_file
+  input_file = filename
+
   graph = Graph(filename)
   print graph.shortest_path(source, target)
 
